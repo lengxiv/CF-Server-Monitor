@@ -1093,33 +1093,19 @@ export async function handleServerDetail(request, env, sys, viewId) {
         if (!res.ok) return;
         const allData = await res.json();
         
-        // 按指标分类数据
-        const cpuData = allData.map(d => ({ x: d.timestamp, y: parseFloat(d.cpu) || 0 }));
-        const ramData = allData.map(d => ({ x: d.timestamp, y: parseFloat(d.ram) || 0 }));
-        const diskData = allData.map(d => ({ x: d.timestamp, y: parseFloat(d.disk) || 0 }));
-        const procData = allData.map(d => ({ x: d.timestamp, y: parseInt(d.processes) || 0 }));
-        const netInData = allData.map(d => ({ x: d.timestamp, y: parseFloat(d.net_in_speed) || 0 }));
-        const netOutData = allData.map(d => ({ x: d.timestamp, y: parseFloat(d.net_out_speed) || 0 }));
-        const tcpData = allData.map(d => ({ x: d.timestamp, y: parseInt(d.tcp_conn) || 0 }));
-        const udpData = allData.map(d => ({ x: d.timestamp, y: parseInt(d.udp_conn) || 0 }));
-        const pingCtData = allData.map(d => ({ x: d.timestamp, y: parseInt(d.ping_ct) || 0 }));
-        const pingCuData = allData.map(d => ({ x: d.timestamp, y: parseInt(d.ping_cu) || 0 }));
-        const pingCmData = allData.map(d => ({ x: d.timestamp, y: parseInt(d.ping_cm) || 0 }));
-        const pingBdData = allData.map(d => ({ x: d.timestamp, y: parseInt(d.ping_bd) || 0 }));
-        
-        // 更新各个图表
-        updateChartDataset(charts.cpu, 0, cpuData, 'timestamp', 'cpu');
-        updateChartDataset(charts.ram, 0, ramData, 'timestamp', 'ram');
-        updateChartDataset(charts.disk, 0, diskData, 'timestamp', 'disk');
-        updateChartDataset(charts.proc, 0, procData, 'timestamp', 'processes');
-        updateChartDataset(charts.net, 0, netInData, 'timestamp', 'net_in_speed');
-        updateChartDataset(charts.net, 1, netOutData, 'timestamp', 'net_out_speed');
-        updateChartDataset(charts.conn, 0, tcpData, 'timestamp', 'tcp_conn');
-        updateChartDataset(charts.conn, 1, udpData, 'timestamp', 'udp_conn');
-        updateChartDataset(charts.ping, 0, pingCtData, 'timestamp', 'ping_ct');
-        updateChartDataset(charts.ping, 1, pingCuData, 'timestamp', 'ping_cu');
-        updateChartDataset(charts.ping, 2, pingCmData, 'timestamp', 'ping_cm');
-        updateChartDataset(charts.ping, 3, pingBdData, 'timestamp', 'ping_bd');
+        // 更新各个图表（数据格式与 updateChartDataset 期望一致：{ timestamp: value }）
+        updateChartDataset(charts.cpu, 0, allData, 'timestamp', 'cpu');
+        updateChartDataset(charts.ram, 0, allData, 'timestamp', 'ram');
+        updateChartDataset(charts.disk, 0, allData, 'timestamp', 'disk');
+        updateChartDataset(charts.proc, 0, allData, 'timestamp', 'processes');
+        updateChartDataset(charts.net, 0, allData, 'timestamp', 'net_in_speed');
+        updateChartDataset(charts.net, 1, allData, 'timestamp', 'net_out_speed');
+        updateChartDataset(charts.conn, 0, allData, 'timestamp', 'tcp_conn');
+        updateChartDataset(charts.conn, 1, allData, 'timestamp', 'udp_conn');
+        updateChartDataset(charts.ping, 0, allData, 'timestamp', 'ping_ct');
+        updateChartDataset(charts.ping, 1, allData, 'timestamp', 'ping_cu');
+        updateChartDataset(charts.ping, 2, allData, 'timestamp', 'ping_cm');
+        updateChartDataset(charts.ping, 3, allData, 'timestamp', 'ping_bd');
         
         // 更新 X 轴时间单位
         updateAllChartTimeUnits(hours);
