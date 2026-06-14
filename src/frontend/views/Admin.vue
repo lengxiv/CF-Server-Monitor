@@ -439,6 +439,34 @@
             <input type="text" name="edit_traffic_limit" autocomplete="off" v-model="editForm.traffic_limit" class="form-input" placeholder="e.g. 1TB">
           </div>
 
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label class="form-label">{{ trans.reportInterval }}</label>
+              <select v-model="editForm.report_interval" class="form-select">
+                <option :value="30">30</option>
+                <option :value="60">60</option>
+                <option :value="120">120</option>
+                <option :value="180">180</option>
+              </select>
+            </div>
+            <div class="form-group flex-1">
+              <label class="form-label">{{ trans.pingMode }}</label>
+              <select v-model="editForm.ping_mode" class="form-select">
+                <option value="http">HTTP</option>
+                <option value="tcp">TCP</option>
+              </select>
+            </div>
+            <div class="form-group flex-1">
+              <label class="form-label">{{ trans.trafficResetDay }}</label>
+              <select ref="editResetDayRef" name="edit_reset_day" v-model="editForm.reset_day" class="form-select">
+                <option v-for="day in 31" :key="day" :value="day">{{ day }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="text-muted text-sm mb-3">
+            <span class="warning-icon">[i]</span> {{ trans.trafficResetDayTip }}
+          </div>
+
           <div class="form-group">
             <div class="checkbox-item no-margin">
               <input type="checkbox" v-model="editForm.is_hidden">
@@ -509,25 +537,26 @@
             </select>
           </div>
 
-          <div class="form-group">
-            <label class="form-label">{{ trans.reportInterval }}</label>
-            <select v-model="reportInterval" class="form-select">
-              <option :value="30">30</option>
-              <option :value="60">60</option>
-              <option :value="120">120</option>
-              <option :value="180">180</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">{{ trans.pingMode }}</label>
-            <select v-model="pingMode" class="form-select">
-              <option value="http">HTTP</option>
-              <option value="tcp">TCP</option>
-            </select>
-            <p class="text-muted text-sm mt-2">
-              <span class="warning-icon">[i]</span> {{ trans.tcpWarning }}
-            </p>
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label class="form-label">{{ trans.reportInterval }}</label>
+              <div class="flex items-center gap-2">
+                <input type="text" readonly :value="reportInterval" class="form-input" style="width: 100px; background-color: var(--bg-secondary);">
+              </div>
+            </div>
+            <div class="form-group flex-1">
+              <label class="form-label">{{ trans.pingMode }}</label>
+              <div class="flex items-center gap-2">
+                <input type="text" readonly :value="pingMode.toUpperCase()" class="form-input" style="width: 100px; background-color: var(--bg-secondary);">
+              </div>
+            </div>
+            <div class="form-group flex-1">
+              <label class="form-label">{{ trans.trafficResetDay }}</label>
+              <div class="flex items-center gap-2">
+                <input type="text" readonly :value="resetDay" class="form-input" style="width: 100px; background-color: var(--bg-secondary);">
+                <button @click="openEditModalFromCopy" class="btn btn-icon btn-blue" :title="trans.edit">✏️</button>
+              </div>
+            </div>
           </div>
 
           <div class="form-row">
@@ -550,14 +579,6 @@
               <label class="form-label">{{ trans.customBd }}</label>
               <input type="text" name="custom_bd" autocomplete="off" v-model="customBd" class="form-input" placeholder="lf3-ips.zstaticcdn.com">
             </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">{{ trans.trafficResetDay }}</label>
-            <input type="number" name="reset_day" autocomplete="off" v-model="resetDay" min="1" max="31" class="form-input" placeholder="1" style="width: 100px;">
-            <p class="text-muted text-sm mt-2">
-              <span class="warning-icon">[i]</span> {{ trans.trafficResetDayTip }}
-            </p>
           </div>
 
           <div class="form-group">
@@ -633,7 +654,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import TerminalHeader from '../components/TerminalHeader.vue'
 import Footer from '../components/Footer.vue'
 import { adminApi, login, logout as apiLogout, formatBytes, upgradeDatabase, rebuildDatabase } from '../utils/api'
@@ -710,6 +731,7 @@ const togglePassword = (field) => {
 }
 
 const showEditModal = ref(false)
+const editResetDayRef = ref(null)
 const editForm = ref({
   id: '',
   name: '',
@@ -718,6 +740,9 @@ const editForm = ref({
   expire_date: '',
   bandwidth: '',
   traffic_limit: '',
+  reset_day: 1,
+  report_interval: 60,
+  ping_mode: 'http',
   is_hidden: false
 })
 
@@ -1011,15 +1036,16 @@ const getUninstallCommand = () => {
 }
 
 const copyCmd = (serverId) => {
+  const server = servers.value.find(s => s.id === serverId)
   copyServerId.value = serverId
   targetOs.value = 'linux'
-  reportInterval.value = 60
-  pingMode.value = 'http'
+  reportInterval.value = server?.report_interval || 60
+  pingMode.value = server?.ping_mode || 'http'
   customCt.value = settings.value.custom_ct
   customCu.value = settings.value.custom_cu
   customCm.value = settings.value.custom_cm
   customBd.value = settings.value.custom_bd
-  resetDay.value = 1
+  resetDay.value = server?.reset_day || 1
   copiedCmd.value = false
   showCopyModal.value = true
 }
@@ -1057,6 +1083,17 @@ const closeCopyModal = () => {
   showCopyModal.value = false
 }
 
+const openEditModalFromCopy = () => {
+  const server = servers.value.find(s => s.id === copyServerId.value)
+  if (server) {
+    showCopyModal.value = false
+    openEditModal(server)
+    nextTick(() => {
+      editResetDayRef.value?.focus()
+    })
+  }
+}
+
 const copyUninstallCmd = async () => {
   const cmd = getUninstallCommand()
   try {
@@ -1080,6 +1117,9 @@ const openEditModal = (server) => {
     expire_date: server.expire_date || '',
     bandwidth: server.bandwidth || '',
     traffic_limit: server.traffic_limit || '',
+    reset_day: server.reset_day || 1,
+    report_interval: server.report_interval || 60,
+    ping_mode: server.ping_mode || 'http',
     is_hidden: server.is_hidden === '1'
   }
   showEditModal.value = true
@@ -1099,6 +1139,9 @@ const saveEdit = async () => {
       expire_date: editForm.value.expire_date,
       bandwidth: editForm.value.bandwidth,
       traffic_limit: editForm.value.traffic_limit,
+      reset_day: editForm.value.reset_day,
+      report_interval: editForm.value.report_interval,
+      ping_mode: editForm.value.ping_mode,
       is_hidden: editForm.value.is_hidden ? '1' : '0'
     }
 
@@ -1109,7 +1152,7 @@ const saveEdit = async () => {
         alert(getMessage(result.message) || 'Success')
         location.reload()
       } else {
-        alert(result.error || 'Fail')
+        alert(getMessage(result.error) || 'Fail')
       }
     } catch (e) {
       alert('Fail: ' + e.message)

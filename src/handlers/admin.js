@@ -338,7 +338,7 @@ export async function handleAdminAPI(request, env, sys) {
       });
     }
     else if (data.action === 'edit') {
-      const { id, name, server_group, price, expire_date, bandwidth, traffic_limit, is_hidden } = data;
+      const { id, name, server_group, price, expire_date, bandwidth, traffic_limit, reset_day, report_interval, ping_mode, is_hidden } = data;
       if (!id || !isValidUUID(id)) {
         return new Response(JSON.stringify({ error: '服务器 ID 无效' }), { 
           status: 400,
@@ -346,35 +346,54 @@ export async function handleAdminAPI(request, env, sys) {
         });
       }
       
-      if (name && typeof name === 'string' && name.trim().length > 0 && name.length <= 100) {
-        await env.DB.prepare(`
-          UPDATE servers 
-          SET name = ?, server_group = ?, price = ?, expire_date = ?, bandwidth = ?, traffic_limit = ?, is_hidden = ? 
-          WHERE id = ?
-        `).bind(
-          name,
-          server_group || 'Default', 
-          price || '', 
-          expire_date || '', 
-          bandwidth || '', 
-          traffic_limit || '',
-          is_hidden || '0',
-          id
-        ).run();
-      } else {
-        await env.DB.prepare(`
-          UPDATE servers 
-          SET server_group = ?, price = ?, expire_date = ?, bandwidth = ?, traffic_limit = ?, is_hidden = ? 
-          WHERE id = ?
-        `).bind(
-          server_group || 'Default', 
-          price || '', 
-          expire_date || '', 
-          bandwidth || '', 
-          traffic_limit || '',
-          is_hidden || '0',
-          id
-        ).run();
+      try {
+        if (name && typeof name === 'string' && name.trim().length > 0 && name.length <= 100) {
+          await env.DB.prepare(`
+            UPDATE servers 
+            SET name = ?, server_group = ?, price = ?, expire_date = ?, bandwidth = ?, traffic_limit = ?, reset_day = ?, report_interval = ?, ping_mode = ?, is_hidden = ? 
+            WHERE id = ?
+          `).bind(
+            name,
+            server_group || 'Default', 
+            price || '', 
+            expire_date || '', 
+            bandwidth || '', 
+            traffic_limit || '',
+            reset_day || 1,
+            report_interval || 60,
+            ping_mode || 'http',
+            is_hidden || '0',
+            id
+          ).run();
+        } else {
+          await env.DB.prepare(`
+            UPDATE servers 
+            SET server_group = ?, price = ?, expire_date = ?, bandwidth = ?, traffic_limit = ?, reset_day = ?, report_interval = ?, ping_mode = ?, is_hidden = ? 
+            WHERE id = ?
+          `).bind(
+            server_group || 'Default', 
+            price || '', 
+            expire_date || '', 
+            bandwidth || '', 
+            traffic_limit || '',
+            reset_day || 1,
+            report_interval || 60,
+            ping_mode || 'http',
+            is_hidden || '0',
+            id
+          ).run();
+        }
+      } catch (e) {
+        console.error('Edit server error:', e);
+        return new Response(JSON.stringify({ 
+          error: {
+            en: 'Update failed. Please go to Database Management and click "Upgrade Database" to migrate the new field.',
+            zh: '更新失败，请到数据库管理中点击"升级数据库"以迁移新字段。'
+          }
+        }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        });
       }
       
       clearServersListCache();

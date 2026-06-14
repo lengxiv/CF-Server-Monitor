@@ -143,6 +143,7 @@ const translations = reactive({
     editConf: 'Edit Configuration',
     deleteConf: 'Delete Configuration',
     errorInvalidUsername: '[ERROR] Invalid username or password',
+    serverUpdateFailedDbNotReady: '[ERROR] Update failed. Please go to Database Management and click "Upgrade Database" to migrate the new field.',
     configSaved: '[OK] Configuration saved! Reloading...',
     saveFailed: '[ERROR] Save failed: ',
     saveFailedUnknown: '[ERROR] Save failed: Unknown error',
@@ -203,7 +204,7 @@ const translations = reactive({
     monthlyTraffic: 'Monthly Traffic',
     monthlyTrafficLimit: 'Traffic Limit',
     trafficResetDay: 'Traffic Reset Day',
-    trafficResetDayTip: 'Day of month to reset traffic counter (1-31). Automatically adjusts for months with fewer days.'
+    trafficResetDayTip: 'After modifying, you need to reinstall the agent on the server.'
   },
   zh: {
     theme: '主题',
@@ -347,6 +348,7 @@ const translations = reactive({
     editConf: '编辑配置',
     deleteConf: '删除配置',
     errorInvalidUsername: '[错误] 用户名或密码无效',
+    serverUpdateFailedDbNotReady: '[错误] 更新失败，请到数据库管理中点击"升级数据库"以迁移新字段。',
     configSaved: '[成功] 配置已保存！正在刷新...',
     saveFailed: '[错误] 保存失败：',
     saveFailedUnknown: '[错误] 保存失败：未知错误',
@@ -407,7 +409,7 @@ const translations = reactive({
     monthlyTraffic: '月度流量',
     monthlyTrafficLimit: '月度流量限制',
     trafficResetDay: '流量重置日',
-    trafficResetDayTip: '每月重置流量计数器的日期（1-31）。对于天数不足的月份会自动调整。'
+    trafficResetDayTip: '修改之后，需要在服务器中重新安装探针。'
   }
 })
 
